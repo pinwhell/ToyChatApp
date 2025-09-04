@@ -6,14 +6,15 @@
 #include <WS2tcpip.h>
 #include <vector>
 #include <cstdint>
+#include <optional>
 
 namespace ChatApp {
 	struct SocketServer {
 
 		struct Client {
 
-			void Send(const char* buf, size_t sz) const;
-			std::vector<std::uint8_t> Recv() const;
+			bool Send(const char* buf, size_t sz) const;
+			std::optional<std::vector<std::uint8_t>> Recv() const;
 
 			SOCKET mClient{};
 			sockaddr_in mClientAddr{};

@@ -12,7 +12,7 @@
 namespace ChatApp {
 	struct Server {
 		struct Client {
-			void Message(std::string_view byWho, std::string_view what);
+			bool Message(std::string_view byWho, std::string_view what);
 
 			std::string mUsername;
 			SocketServer::Client mClient;

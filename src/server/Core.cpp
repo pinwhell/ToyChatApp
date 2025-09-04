@@ -5,10 +5,10 @@
 
 using namespace ChatApp;
 
-void Server::Client::Message(std::string_view byWho, std::string_view what)
+bool Server::Client::Message(std::string_view byWho, std::string_view what)
 {
-	SvPacketMessage packt(byWho, what); packt.ToNetwork();
-	mClient.Send((const char*)&packt, sizeof(packt));
+	SvPacketMessage packt(byWho, what);
+	return mClient.Send((const char*)&packt, sizeof(packt));
 }
 
 Server::Server(int port, int maxClients)
@@ -18,10 +18,10 @@ std::optional<Server::Client*> Server::WaitClient()
 {
 	auto client = mServer.WaitClient();
 	auto loginBuf = client.Recv();
-	auto* packetBase = (PacketBase<>*)loginBuf.data();
-	packetBase->ToHost();
+	if (!loginBuf) return {};
+	auto* packetBase = (PacketBase<>*)loginBuf->data();
 	if (packetBase->mType != EPacket::LOGIN) {
-		::ChatApp::PacketBase<EPacket::NIL> nil; nil.ToNetwork();
+		PacketBase<EPacket::NIL> nil;
 		client.Send((const char*)&nil, sizeof(nil));
 		return {};
 	}
@@ -29,18 +29,22 @@ std::optional<Server::Client*> Server::WaitClient()
 	std::lock_guard lck(mClientsMtx);
 	auto it = mClients.find(loginPacketBase->mUsername);
 	if (it != mClients.end()) {
-		::ChatApp::PacketBase<EPacket::NIL> nil; nil.ToNetwork();
+		PacketBase<EPacket::NIL> nil;
 		client.Send((const char*)&nil, sizeof(nil));
 		return {};
 	}
-	auto pair = mClients.insert({
+	mClients.insert({
 		std::string(loginPacketBase->mUsername),
 		std::make_unique<Client>(Client{
 			loginPacketBase->mUsername ,
 			client })
 		});
-	::ChatApp::PacketBase<EPacket::OK> ok; ok.ToNetwork();
-	client.Send((const char*)&ok, sizeof(ok));
+	PacketBase<EPacket::OK> ok;
+	if (!client.Send((const char*)&ok, sizeof(ok)))
+	{
+		mClients.erase(loginPacketBase->mUsername);
+		return {};
+	}
 	return mClients[loginPacketBase->mUsername].get();
 }
 void Server::ClientThread(Client* client)
@@ -49,17 +53,23 @@ void Server::ClientThread(Client* client)
 	while (true)
 	{
 		auto buf = client->mClient.Recv();
-		auto* packetBase = (::ChatApp::PacketBase<>*)buf.data();
-		packetBase->ToHost();
-		if (packetBase->mType != EPacket::CLI_MESSAGE) continue;
+		if (!buf) break;
+		auto* packetBase = (::ChatApp::PacketBase<>*)buf->data();
+		if (packetBase->mType != EPacket::CLI_MESSAGE) {
+			PacketBase<EPacket::NIL> nil;
+			client->mClient.Send((const char*)&nil, sizeof(nil));
+			continue;
+		}
 		auto* cliMsg = (CliPacketMessage*)packetBase;
 		std::cout << "(" << client->mUsername << "): " << cliMsg->mMsg << "\n";
 		std::lock_guard lck(mClientsMtx);
 		for (auto& [key, value] : mClients)
 			if (key != client->mUsername)
 				value->Message(client->mUsername, cliMsg->mMsg);
-
 	}
+	std::cout << client->mUsername << ": Disconnected\n";
+	std::lock_guard lck(mClientsMtx);
+	mClients.erase(client->mUsername);
 }
 
 void Server::Run()

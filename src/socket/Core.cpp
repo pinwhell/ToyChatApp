@@ -5,12 +5,12 @@
 
 using namespace ChatApp;
 
-void SocketServer::Client::Send(const char* buf, size_t sz) const
+bool SocketServer::Client::Send(const char* buf, size_t sz) const
 {
-	send(mClient, buf, sz, 0u);
+	return send(mClient, buf, sz, 0u) > 0;
 }
 
-std::vector<std::uint8_t> SocketServer::Client::Recv() const
+std::optional<std::vector<std::uint8_t>> SocketServer::Client::Recv() const
 {
 	char buf[1024];
 	int bytesReceived = recv(mClient, buf, sizeof(buf), 0);
@@ -56,12 +56,12 @@ SocketClient::SocketClient(const char* ip, int port)
 	connect(mSv, (sockaddr*)&serverAddr, sizeof(serverAddr));
 }
 
-void SocketClient::Send(const void* buf, size_t len)
+bool SocketClient::Send(const void* buf, size_t len)
 {
-	send(mSv, (const char*)buf, len, 0u);
+	return send(mSv, (const char*)buf, len, 0u) > 0;
 }
 
-std::vector<std::uint8_t> SocketClient::Recv() const
+std::optional<std::vector<std::uint8_t>> SocketClient::Recv() const
 {
 	char buf[1024]{};
 	int bytesReceived = recv(mSv, buf, sizeof(buf), 0);

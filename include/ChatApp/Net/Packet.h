@@ -9,24 +9,10 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 
+#pragma pack(push, 1)
 namespace ChatApp {
 	template<EPacket Type = EPacket::NIL>
 	struct PacketBase {
-		void ToNetwork()
-		{
-			mType = (EPacket)htonl((u_long)mType);
-		}
-
-		void ToHost()
-		{
-			mType = (EPacket)ntohl((u_long)mType);
-		}
-
-		size_t BaseSize()
-		{
-			return sizeof(mType);
-		}
-
 		EPacket mType = Type;
 	};
 
@@ -60,3 +46,4 @@ namespace ChatApp {
 		char mMsg[MAX_MSG_SIZE];
 	};
 }
+#pragma pack(pop)
