@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <ChatApp/Socket/Base.h>
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <vector>
@@ -11,12 +12,7 @@
 namespace ChatApp {
 	struct SocketServer {
 
-		struct Client {
-
-			bool Send(const char* buf, size_t sz) const;
-			std::optional<std::vector<std::uint8_t>> Recv() const;
-
-			SOCKET mClient{};
+		struct Client : SocketBase {
 			sockaddr_in mClientAddr{};
 		};
 

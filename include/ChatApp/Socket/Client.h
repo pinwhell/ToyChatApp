@@ -2,16 +2,14 @@
 
 #include <WinSock2.h>
 #include <WS2tcpip.h>
-#include <vector>
-#include <cstdint>
+#include <ChatApp/Socket/Base.h>
 #include <optional>
+#include <cstdint>
+#include <vector>
+#include <memory>
 
 namespace ChatApp {
-	struct SocketClient {
+	struct SocketClient : SocketBase {
 		SocketClient(const char* ip = "127.0.0.1", int port = 0u);
-		bool Send(const void* buf, size_t len);
-		std::optional<std::vector<std::uint8_t>> Recv() const;
-
-		SOCKET mSv;
 	};
 }

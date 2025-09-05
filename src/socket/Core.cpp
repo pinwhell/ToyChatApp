@@ -1,19 +1,20 @@
 #include <ChatApp/Socket/Server.h>
 #include <ChatApp/Socket/Client.h>
+#include <ChatApp/Socket/Base.h>
 
 #pragma comment(lib, "ws2_32.lib")
 
 using namespace ChatApp;
 
-bool SocketServer::Client::Send(const char* buf, size_t sz) const
+bool SocketBase::Send(const void* buf, size_t sz) const
 {
-	return send(mClient, buf, sz, 0u) > 0;
+	return send(mSocket, (const char*)buf, sz, 0u) > 0;
 }
 
-std::optional<std::vector<std::uint8_t>> SocketServer::Client::Recv() const
+std::optional<std::vector<std::uint8_t>> SocketBase::Recv() const
 {
 	char buf[1024];
-	int bytesReceived = recv(mClient, buf, sizeof(buf), 0);
+	int bytesReceived = recv(mSocket, buf, sizeof(buf), 0);
 	if (bytesReceived <= 0) return {}; // handle error or disconnection
 	return std::vector<std::uint8_t>(buf, buf + bytesReceived);
 }
@@ -24,7 +25,7 @@ SocketServer::Client SocketServer::Accept(SOCKET sv)
 	sockaddr_in clientAddr{};
 	int clientSize = sizeof(clientAddr);
 	client = accept(sv, (sockaddr*)&clientAddr, &clientSize);
-	return SocketServer::Client{ client, clientAddr };
+	return SocketServer::Client{ SocketBase{ client }, clientAddr };
 }
 
 SocketServer::SocketServer(int port, int maxConn)
@@ -48,23 +49,10 @@ SocketClient::SocketClient(const char* ip, int port)
 {
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
-	mSv = socket(AF_INET, SOCK_STREAM, 0);
+	mSocket = socket(AF_INET, SOCK_STREAM, 0);
 	sockaddr_in serverAddr{};
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(port);               // Port 3000
 	inet_pton(AF_INET, ip, &serverAddr.sin_addr); // Localhost
-	connect(mSv, (sockaddr*)&serverAddr, sizeof(serverAddr));
-}
-
-bool SocketClient::Send(const void* buf, size_t len)
-{
-	return send(mSv, (const char*)buf, len, 0u) > 0;
-}
-
-std::optional<std::vector<std::uint8_t>> SocketClient::Recv() const
-{
-	char buf[1024]{};
-	int bytesReceived = recv(mSv, buf, sizeof(buf), 0);
-	if (bytesReceived <= 0) return {}; // handle error or disconnection
-	return std::vector<std::uint8_t>(buf, buf + bytesReceived);
+	connect(mSocket, (sockaddr*)&serverAddr, sizeof(serverAddr));
 }

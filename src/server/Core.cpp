@@ -78,9 +78,9 @@ void Server::Run()
 	{
 		auto client_ = WaitClient();
 		if (!client_) continue;
-		auto& chatClient = **client_;
-		std::thread([this, &client_] {
-			ClientThread(*client_);
+		auto* chatClient = *client_;
+		std::thread([this, chatClient] {
+			ClientThread(chatClient);
 			}).detach();
 	}
 }
