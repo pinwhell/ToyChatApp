@@ -28,25 +28,25 @@ std::optional<Server::Client*> Server::WaitClient()
 	}
 	auto* loginPacketBase = (PacketLogin*)packetBase;
 	std::lock_guard lck(mClientsMtx);
-	auto it = mClients.find(loginPacketBase->mUsername);
+	auto it = mClients.find(loginPacketBase->Username());
 	if (it != mClients.end()) {
 		PacketBase<EPacket::NIL> nil;
 		client->Send((const char*)&nil, sizeof(nil));
 		return {};
 	}
 	mClients.insert({
-		std::string(loginPacketBase->mUsername),
+		std::string(loginPacketBase->Username()),
 		std::make_unique<Client>(Client{
-			loginPacketBase->mUsername ,
+			loginPacketBase->Username() ,
 			*client })
 		});
 	PacketBase<EPacket::OK> ok;
 	if (!client->Send((const char*)&ok, sizeof(ok)))
 	{
-		mClients.erase(loginPacketBase->mUsername);
+		mClients.erase(loginPacketBase->Username());
 		return {};
 	}
-	return mClients[loginPacketBase->mUsername].get();
+	return mClients[loginPacketBase->Username()].get();
 }
 void Server::ClientThread(Client* client)
 {

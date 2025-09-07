@@ -22,7 +22,14 @@ namespace ChatApp {
 			memset(mUsername, 0u, sizeof(mUsername));
 			strncpy(mUsername, usrName.data(), std::min(usrName.size(), MAX_USRNM_SIZE));
 		}
+		
+		const char* Username()
+		{
+			mUsername[MAX_USRNM_SIZE] = '\0';
+			return mUsername;
+		}
 
+	private:
 		char mUsername[MAX_USRNM_SIZE];
 	};
 
