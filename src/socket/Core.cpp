@@ -19,12 +19,13 @@ std::optional<std::vector<std::uint8_t>> SocketBase::Recv() const
 	return std::vector<std::uint8_t>(buf, buf + bytesReceived);
 }
 
-SocketServer::Client SocketServer::Accept(SOCKET sv)
+std::optional<SocketServer::Client> SocketServer::Accept(SOCKET sv)
 {
 	SOCKET client{};
 	sockaddr_in clientAddr{};
 	int clientSize = sizeof(clientAddr);
 	client = accept(sv, (sockaddr*)&clientAddr, &clientSize);
+	if (client == INVALID_SOCKET) return {};
 	return SocketServer::Client{ SocketBase{ client }, clientAddr };
 }
 
@@ -40,7 +41,7 @@ SocketServer::SocketServer(int port, int maxConn)
 	listen(mServer, maxConn);
 }
 
-SocketServer::Client SocketServer::WaitClient() const
+std::optional<SocketServer::Client> SocketServer::WaitClient() const
 {
 	return Accept(mServer);
 }

@@ -43,6 +43,13 @@ namespace ChatApp {
 			strncpy(mMsg, what.data(), std::min(what.size() + 1, MAX_MSG_SIZE));
 		}
 
+		const char* c_str()
+		{
+			mMsg[MAX_MSG_SIZE] = '/0';
+			return mMsg;
+		}
+
+	private:
 		char mMsg[MAX_MSG_SIZE];
 	};
 }

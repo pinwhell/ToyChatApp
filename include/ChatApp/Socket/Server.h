@@ -17,8 +17,8 @@ namespace ChatApp {
 		};
 
 		SocketServer(int port, int maxConn);
-		Client WaitClient() const;
-		static Client Accept(SOCKET sv);
+		std::optional<Client> WaitClient() const;
+		static std::optional<Client> Accept(SOCKET sv);
 
 		SOCKET mServer;
 		sockaddr_in mSvAddr;
